@@ -9,22 +9,24 @@ class App extends React.Component {
     this.contentRef = React.createRef();
     this.createVoucher = this.createVoucher.bind(this);
     this.handlePrint = this.handlePrint.bind(this);
-    
+
     this.state = {
       data: [],
       error: null,
-      isLoading: false
+      isLoading: false,
+      token: ''
     };
   }
 
-  componentDidMount() {
+  handleSubmit = (event) => {
+    event.preventDefault();
     this.setState({ isLoading: true });
 
     fetch('https://apitest.star.com.au/api/rest/loyalty/v2/incentives', {
       headers: {
         'Accept': 'application/json;version=1.0.0',
         'loc': 'SYD',
-        Authorization: 'Bearer ' + 'XMtZ4hYsH5De6UphcKHu5ZHKEB4TYS76nEZeubWNH1iy9tLndyqbfS',
+        Authorization: 'Bearer ' + this.state.token,
       }
     },)
       .then(response => response.json())
@@ -32,28 +34,34 @@ class App extends React.Component {
       .catch(error => this.setState({ error, isLoading: false }));
   }
 
+  handleChange = (event) => {
+    this.setState({token: event.target.value});
+  }
+
   createVoucher(item) {
     const content = (
-        <div className="voucher" ref={this.contentRef} id={item.id}>
-            <img src="/starclub.png" alt="Logo"/>
+          <div className="voucher" ref={this.contentRef} id={item.id}>
+            <link rel="stylesheet" href="index.css"/>
+            <img src="/starclub.png" alt="Logo" />
             <p className="price">{item.balanceDisplay}</p>
-            <p className="centered">{item.name}</p>
-            <p className="centered">{item.id}</p>
+            <p className="name">{item.name}</p>
+            <p className="price">{item.id}</p>
             <p className="centered">{item.expiryDisplay}</p>
             <p className="description">{item.description}</p>
             <p className="description">{item.disclaimer}</p>
-        </div>
-      );
-      return content;
+          </div>
+    );
+    return content;
   };
 
-  handlePrint= (voucherId) => {
+  handlePrint = (voucherId) => {
     if (voucherId) {
       const iframe = document.getElementById("myiframe");
-			const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       iframeDoc.body.innerHTML = document.getElementById(voucherId).innerHTML;
+      iframeDoc.head.innerHTML= '<style type="text/css">* {font-size: 10px; font-family: "Campton-Light", helvetica, arial, sans-serif;} .centered {text-align: center; align-content: center;} .price {text-align: center; text-transform: uppercase; font-size: 18px; font-weight: bold;} .name {text-align: center; text-transform: uppercase; font-size: 16px;}</style>';
 
-			iframe.contentWindow.print();
+      iframe.contentWindow.print();
     }
   }
 
@@ -69,8 +77,17 @@ class App extends React.Component {
     }
 
     return (
-      <div className='App'>
-        <div className="hidden-print">
+      <div className="hidden-print">
+        <div>
+        <form onSubmit={this.handleSubmit}>
+          <label>
+            Input Text:
+            <input type="text" value={this.state.token} onChange={this.handleChange}/>
+          </label>
+          <button type="submit">Submit</button>
+        </form>
+        </div>
+        <div>
           <h1>Vouchers</h1>
           <table>
             <thead>
@@ -96,7 +113,7 @@ class App extends React.Component {
             </tbody>
           </table>
         </div>
-        <iframe id="myiframe" class="invisible"></iframe>
+        <iframe id="myiframe" className="invisible"></iframe>
       </div>
     );
   }
